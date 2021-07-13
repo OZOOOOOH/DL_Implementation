@@ -1,2 +1,2 @@
 # DL_Implementation
-Implement DL_papaer using pytorch
+Implement DL_paper using pytorch
