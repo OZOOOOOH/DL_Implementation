@@ -1,2 +1,2 @@
 # DL_Implementation
-Implement DL_paper using pytorch
+Implement Deep Learning paper using pytorch
