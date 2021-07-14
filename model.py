@@ -7,7 +7,6 @@ warnings.filterwarnings("ignore")
 
 class Net(nn.Module):
     def __init__(self,num_classes=2,init_weights=True):
-        # super(Net,self).__init__()
         super().__init__()
 
         self.conv1=nn.Conv2d(3,64,kernel_size=7,stride=2,padding=3)
@@ -15,38 +14,36 @@ class Net(nn.Module):
         self.relu=nn.ReLU()
         self.pool1=nn.MaxPool2d(3,stride=2,padding=1)
 
-        #resnet
-        self.layer1=nn.Sequential(#3
-            Block(64,  64),
+        # self.layer1=nn.Sequential(#3
+        #     Block(64,  64),
+        #     Block(256, 64),
+        #     Block(256, 64)
+        # )
+        # self.layer2 = nn.Sequential(#4
+        #     Block(256, 128,stride=2),
+        #     Block(512, 128),
+        #     Block(512, 128),
+        #     Block(512, 128)
+        # )
+        # self.layer3 = nn.Sequential(#6
+        #     Block(512, 256,stride=2),
+        #     Block(1024, 256),
+        #     Block(1024, 256),
+        #     Block(1024, 256),
+        #     Block(1024, 256),
+        #     Block(1024, 256)
+        # )
+        # self.layer4 = nn.Sequential(#3
+        #     Block(1024, 512,stride=2),
+        #     Block(2048, 512),
+        #     Block(2048, 512)
+        # )
 
-            Block(256, 64),
-            Block(256, 64)
-        )
-        self.layer2 = nn.Sequential(#4
-            Block(256, 128,stride=2),
+        self.layer1 = self.make_layer(64, 64, 3, stride=1)
+        self.layer2 = self.make_layer(256, 128, 4, stride=2)
+        self.layer3 = self.make_layer(512, 256, 6, stride=2)
+        self.layer4 = self.make_layer(1024, 512, 3, stride=2)
 
-            Block(512, 128),
-            Block(512, 128),
-            Block(512, 128)
-        )
-        self.layer3 = nn.Sequential(#6
-            Block(512, 256,stride=2),
-
-            Block(1024, 256),
-            Block(1024, 256),
-            Block(1024, 256),
-            Block(1024, 256),
-            Block(1024, 256)
-
-        )
-
-        self.layer4 = nn.Sequential(#3
-            Block(1024, 512,stride=2),
-
-            Block(2048, 512),
-            Block(2048, 512)
-
-        )
 
         self.AvgPool=nn.AdaptiveAvgPool2d((1,1))
 
@@ -55,6 +52,22 @@ class Net(nn.Module):
         # weights inittialization
         if init_weights:
             self._initialize_weights()
+
+
+    def make_layer(self,in_channels, out_channels, num_blocks, stride=1):
+
+        strides = [stride] + [1] * (num_blocks - 1)
+
+        layers = []
+
+        for stride in strides:
+
+            layers.append(Block(in_channels, out_channels, stride))
+
+            in_channels = out_channels * 4
+
+        return nn.Sequential(*layers)
+
 
 
     def forward(self,x):
@@ -109,7 +122,6 @@ class Block(nn.Module):
             nn.Conv2d(out_dim, out_dim * 4, kernel_size=1,bias=False),
 
             nn.BatchNorm2d(out_dim * 4),
-            # nn.ReLU(),
 
         )
         self.shortcut=nn.Sequential()
