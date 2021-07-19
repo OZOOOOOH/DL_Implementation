@@ -4,8 +4,6 @@ import torch.nn.functional as F
 import warnings
 warnings.filterwarnings("ignore")
 
-
-
 class BottleneckBlock(nn.Module):# bn->relu->1x1 conv->bn->relu->3x3 conv -> concat
     def __init__(self,in_channels,growth_rate):
         super().__init__()
