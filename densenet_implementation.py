@@ -1,14 +1,16 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torchsummary
 import warnings
+from torchvision.models import densenet121
 warnings.filterwarnings("ignore")
 
 class BottleneckBlock(nn.Module):# bn->relu->1x1 conv->bn->relu->3x3 conv -> concat
     def __init__(self,in_channels,growth_rate):
         super().__init__()
         self.bn1=nn.BatchNorm2d(in_channels)
-        self.relu=nn.ReLU()
+        self.relu=nn.ReLU(inplace=True)
         self.conv1=nn.Conv2d(in_channels,growth_rate*4,kernel_size=1,bias=False)
         self.bn2=nn.BatchNorm2d(growth_rate*4)
         self.conv2=nn.Conv2d(growth_rate*4,growth_rate,kernel_size=3,padding=1,bias=False)
@@ -24,7 +26,7 @@ class TransitionBlock(nn.Module):# bn->relu->1x1 conv->avgPool
     def __init__(self,in_channels,compress=0.5):
         super().__init__()
         self.bn=nn.BatchNorm2d(in_channels)
-        self.relu=nn.ReLU()
+        self.relu=nn.ReLU(inplace=True)
         self.conv=nn.Conv2d(in_channels=in_channels,out_channels=int(in_channels*compress),kernel_size=1,stride=1,bias=False)
         self.avgPool=nn.AvgPool2d(2,stride=2)
 
@@ -54,7 +56,8 @@ class Densenet(nn.Module):
             out_channels=growth_rate*2,
             kernel_size=7,
             stride=2,
-            padding=3
+            padding=3,
+            bias=False
         )
         self.bn=nn.BatchNorm2d(self.conv.out_channels)
         self.pool=nn.MaxPool2d(
@@ -62,7 +65,7 @@ class Densenet(nn.Module):
             stride=2,
             padding=1
         )
-        self.relu=nn.ReLU()
+        self.relu=nn.ReLU(inplace=True)
 
         self.denseblocks=nn.ModuleList()
         num_channels=self.conv.out_channels
@@ -74,7 +77,7 @@ class Densenet(nn.Module):
                 DenseBlock(num_channels, num_layers, growth_rate)
             )
             num_channels += num_layers * growth_rate
-            if i != len_DenseBlocks:
+            if i+1!= len_DenseBlocks:
                 self.denseblocks.append(
                     TransitionBlock(in_channels=num_channels, compress=compress)
                 )
@@ -101,7 +104,19 @@ class Densenet(nn.Module):
 
 def _test():
     net = Densenet(in_channels=3, dense_layers=[6, 12, 24, 16], growth_rate=32, num_classes=2, compress=0.5).cuda()
-    out = net(torch.randn(8, 3, 224, 224).cuda())
-    print(out.size())
-    # summary(model, (3, 224, 224))
-_test()
+    # out = net(torch.randn(1, 3, 224, 224).cuda())
+    # print(out.size())
+    torchsummary.summary(net, (3, 224, 224))
+
+
+
+# _test()
+# net=densenet121(pretrained=True).cuda()
+# net.classifier=nn.Linear(1024, 2)
+# # torchsummary.summary(net, (3, 224, 224))
+# print(sum([param.nelement() for param in net.parameters()]))
+
+
+net = Densenet(in_channels=3, dense_layers=[6, 12, 24, 16], growth_rate=32, num_classes=2, compress=0.5).cuda()
+torchsummary.summary(net, (3, 224, 224))
+print(net)
