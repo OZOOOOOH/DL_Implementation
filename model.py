@@ -76,8 +76,6 @@ class Net(nn.Module):
             elif isinstance(m, nn.Linear):
                 nn.init.normal_(m.weight, 0, 0.01)
                 nn.init.constant_(m.bias, 0)
-
-
 class Block(nn.Module):
     def __init__(self, in_dim, out_dim, stride=1):
         super().__init__()
@@ -113,7 +111,6 @@ class Block(nn.Module):
         f = self.block(x)
         x=self.shortcut(x)
         h = f + x
-
         h = self.relu(h)
 
         return h
